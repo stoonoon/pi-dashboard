@@ -5,6 +5,7 @@
 import tkinter as tk
 from gtasks import Gtasks
 import soco
+import os
 
 my_dark_green = "#162D32"
 my_dark_grey = "#202020"
@@ -186,7 +187,15 @@ def sonos_action_fav_radio2():
 def sonos_action_fav_lbc():
   sonos_play_radio_fav("LBC London")
 
-
+backlight_is_on = True
+def backlight_toggle():
+  global backlight_is_on
+  if backlight_is_on:
+   os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
+   backlight_is_on = False
+  else:
+    os.popen('sudo bash -c "echo 0 > /sys/class/backlight/rpi_backlight/bl_power"')
+    backlight_is_on = True
 
 # Main window layout frames
 
@@ -210,7 +219,11 @@ quitButton.pack(side=tk.RIGHT)
 
 # tasksFrame widgets
 tasksLabel = tk.Label(tasksFrame, text="loading")
-tasksLabel.pack()
+tasksLabel.grid(sticky="new")
+backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF", height=3, command=backlight_toggle)
+backlightToggleButton.grid(sticky="nsew")
+tasksFrame.columnconfigure(0, weight=1)
+tasksFrame.rowconfigure(0, weight=1)
 
 # sonosFrame layout
 sonosRoomsFrame = tk.Frame(sonosFrame)
