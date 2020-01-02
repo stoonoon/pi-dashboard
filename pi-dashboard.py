@@ -187,15 +187,14 @@ def sonos_action_fav_radio2():
 def sonos_action_fav_lbc():
   sonos_play_radio_fav("LBC London")
 
-backlight_is_on = True
 def backlight_toggle():
-  global backlight_is_on
-  if backlight_is_on:
-   os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
-   backlight_is_on = False
+  stream = os.popen('cat /sys/class/backlight/rpi_backlight/bl_power')
+  output = stream.read()
+  print(output)
+  if '0' in output: # then backlight is on
+    os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
   else:
     os.popen('sudo bash -c "echo 0 > /sys/class/backlight/rpi_backlight/bl_power"')
-    backlight_is_on = True
 
 # Main window layout frames
 
