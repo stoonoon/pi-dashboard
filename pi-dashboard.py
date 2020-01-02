@@ -17,8 +17,15 @@ root = tk.Tk()
 #comment this out to allow window to be moved / resized
 root.overrideredirect(True)
 
-#set size to match pi touchscreen and location top left (desktop) / full screen (on pi)
+# set size to match pi touchscreen resolution and location -
+# top left (desktop) / full screen (on pi)
 root.geometry("800x480+0+0")
+
+# visual styling 
+
+# make all widgets dark green
+root.option_add("*Background", my_dark_green)
+root.option_add("*Foreground", my_white)
 
 # GTasks object
 gt=Gtasks()
@@ -63,7 +70,8 @@ def update_sonos():
     sonos_label_text = f"Playing on: {zone_list}\n"
     current_coordinator = current_spkr.group.coordinator
     global transport_state
-    transport_state = current_coordinator.get_current_transport_info()["current_transport_state"]
+    transport_state = current_coordinator.get_current_transport_info()\
+      ["current_transport_state"]
     if transport_state == "PLAYING":
         sonosPlayPausebutton.configure(text="PAUSE")
         if current_coordinator.is_playing_radio:
@@ -126,16 +134,16 @@ def toggle_party_mode():
   global party_mode
   if party_mode == True:
     current_spkr.unjoin()
-    #party_mode = False
   else:
     if current_spkr == bedroom:
       bedroom.join(kitchen)
     else:
       kitchen.join(bedroom)
-    #party_mode = True
 
-def update_sonosVolume(sliderPosition): # called when slider is moved (either by user, or by update from sonos during update_sonos)
-  # I did briefly look at using current_spkr.ramp_to_volume(sliderPosition), but slider calls this function repeatedly and overrides target... 
+def update_sonosVolume(sliderPosition): 
+  # called when slider is moved (either by user, or by update_sonos)
+  # I did briefly look at using current_spkr.ramp_to_volume(sliderPosition),
+  # but slider calls this function repeatedly and overrides target... 
   # Will maybe revisit this later, but it works well enough for now
   current_spkr.volume = sliderPosition
 
@@ -163,7 +171,8 @@ def sonos_action_fwd():
     print (e)
 
 def sonos_play_radio_fav(channel_label):
-  current_spkr.group.coordinator.play_uri(uri=sonos_favorites_dict[channel_label], title=channel_label)
+  current_spkr.group.coordinator.play_uri(\
+    uri=sonos_favorites_dict[channel_label], title=channel_label)
 
 def sonos_action_fav_6music():
   sonos_play_radio_fav("BBC Radio 6 Music")
@@ -186,68 +195,78 @@ menuFrame = tk.Frame(root, bg=my_dark_grey)
 menuFrame.place(relwidth=1, relheight=0.05, relx=0, rely=0)
 
 #LH gtasks frame
-tasksFrame = tk.Frame(root, bg=my_dark_green)
+tasksFrame = tk.Frame(root)#, bg=my_dark_green)
 tasksFrame.place(relwidth=0.5, relheight=0.95, relx=0, rely=0.05)
 
 #RH sonos frame
-sonosFrame = tk.Frame(root, bg=my_dark_green)
+sonosFrame = tk.Frame(root)#, bg=my_dark_green)
 sonosFrame.place(relwidth=0.5, relheight=0.95, relx=0.5, rely=0.05)
 
 # menuFrame widgets
-quitButton = tk.Button(menuFrame, text="X", command=exit, fg=my_white, bg=my_dark_grey, highlightbackground=my_dark_grey, relief=tk.FLAT, activebackground=my_white, activeforeground=my_dark_grey)
+quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
+  highlightbackground=my_dark_grey, relief=tk.FLAT,\
+  activebackground=my_white, activeforeground=my_dark_grey)
 quitButton.pack(side=tk.RIGHT)
 
 # tasksFrame widgets
-tasksLabel = tk.Label(tasksFrame, text="loading", fg=my_white, bg=my_dark_green)
+tasksLabel = tk.Label(tasksFrame, text="loading")
 tasksLabel.pack()
 
 # sonosFrame layout
-sonosRoomsFrame = tk.Frame(sonosFrame, bg=my_dark_green)
+sonosRoomsFrame = tk.Frame(sonosFrame)
 sonosRoomsFrame.grid(sticky="ew")
-sonosVolumeFrame = tk.Frame(sonosFrame, bg=my_dark_green)
+sonosVolumeFrame = tk.Frame(sonosFrame)
 sonosVolumeFrame.grid(sticky="ew")
-sonosPlayingFrame = tk.Frame(sonosFrame, bg=my_dark_green)
+sonosPlayingFrame = tk.Frame(sonosFrame)
 sonosPlayingFrame.grid(sticky="ew")
-sonosTransportFrame = tk.Frame(sonosFrame, bg=my_dark_green)
+sonosTransportFrame = tk.Frame(sonosFrame)
 sonosTransportFrame.grid(sticky="ew")
-sonosFavouritesFrame = tk.Frame(sonosFrame, bg=my_dark_green)
+sonosFavouritesFrame = tk.Frame(sonosFrame)
 sonosFavouritesFrame.grid(sticky="ew")
 sonosFrame.columnconfigure(0, weight=1)
 sonosFrame.rowconfigure(2, weight=1)
 
 # sonosRoomsFrame layout
-sonosRoomsLabel = tk.Label(sonosRoomsFrame, text="Room", bg=my_dark_green, fg=my_white)
+sonosRoomsLabel = tk.Label(sonosRoomsFrame, text="Room")
 sonosRoomsLabel.grid(columnspan=2, sticky="nsew")
-sonosPartyLabel = tk.Label(sonosRoomsFrame, text="Party Mode", bg=my_dark_green, fg=my_white)
+sonosPartyLabel = tk.Label(sonosRoomsFrame, text="Party Mode")
 sonosPartyLabel.grid(row=0, column=2, sticky="nsew")
-sonosBedroomButton = tk.Button(sonosRoomsFrame, text="Bedroom", height=3, bg=my_dark_green, fg=my_white, relief=tk.SUNKEN, command=select_bedroom)
+sonosBedroomButton = tk.Button(sonosRoomsFrame, text="Bedroom",\
+  height=3, relief=tk.SUNKEN, command=select_bedroom)
 sonosBedroomButton.grid(row=1, column=0)
-sonosKitchenButton = tk.Button(sonosRoomsFrame, text="Kitchen", height=3, bg=my_dark_green, fg=my_white, command=select_kitchen)
+sonosKitchenButton = tk.Button(sonosRoomsFrame, text="Kitchen",\
+  height=3, command=select_kitchen)
 sonosKitchenButton.grid(row=1, column=1)
-sonosPartyModeButton = tk.Button(sonosRoomsFrame, text="ENABLE", height=3, bg=my_dark_green, fg=my_white, command=toggle_party_mode)
+sonosPartyModeButton = tk.Button(sonosRoomsFrame, text="ENABLE",\
+  height=3, command=toggle_party_mode)
 sonosPartyModeButton.grid(row=1, column=2)
 sonosRoomsFrame.columnconfigure(0, weight=1)
 sonosRoomsFrame.columnconfigure(1, weight=1)
 sonosRoomsFrame.columnconfigure(2, weight=1)
 
 # sonosVolumeFrame layout
-sonosVolumeSlider = tk.Scale(sonosVolumeFrame, from_=0, to=100, orient=tk.HORIZONTAL, length=350, fg=my_white, bg=my_dark_green, highlightbackground=my_dark_green, sliderlength=15, width=30, command=update_sonosVolume)
+sonosVolumeSlider = tk.Scale(sonosVolumeFrame, from_=0, to=100,\
+  orient=tk.HORIZONTAL, length=350, highlightbackground=my_dark_green,\
+  sliderlength=15, width=30, command=update_sonosVolume)
 sonosVolumeSlider.grid()
 sonosVolumeFrame.columnconfigure(0, weight=1)
 
 # sonosPlayingFrame layout
-sonosLabel = tk.Label(sonosPlayingFrame, text="waiting for info", fg=my_white, bg="#162D32")
+sonosLabel = tk.Label(sonosPlayingFrame, text="waiting for info")
 sonosLabel.grid()
 sonosPlayingFrame.columnconfigure(0, weight=1)
 sonosPlayingFrame.rowconfigure(0, weight=1)
 
 
 # sonosTransportFrame layout
-sonosRWDbutton = tk.Button(sonosTransportFrame, text="RWD", height=3, width=10, bg=my_dark_green, fg=my_white, command=sonos_action_rwd)
+sonosRWDbutton = tk.Button(sonosTransportFrame, text="RWD",\
+  height=3, width=10, command=sonos_action_rwd)
 sonosRWDbutton.grid()
-sonosPlayPausebutton = tk.Button(sonosTransportFrame, text="Play", height=3, width=10, bg=my_dark_green, fg=my_white, command=sonos_action_play_pause)
+sonosPlayPausebutton = tk.Button(sonosTransportFrame, text="Play",\
+  height=3, width=10, command=sonos_action_play_pause)
 sonosPlayPausebutton.grid(row=0, column=1)
-sonosFWDbutton = tk.Button(sonosTransportFrame, text="FWD", height=3, width=10, bg=my_dark_green, fg=my_white, command=sonos_action_fwd)
+sonosFWDbutton = tk.Button(sonosTransportFrame, text="FWD",\
+  height=3, width=10, command=sonos_action_fwd)
 sonosFWDbutton.grid(row=0, column=2)
 sonosTransportFrame.columnconfigure(0, weight=1)
 sonosTransportFrame.columnconfigure(1, weight=1)
@@ -255,10 +274,14 @@ sonosTransportFrame.columnconfigure(2, weight=1)
 
 
 # sonosFavoritesFrame layout
-sonos6MusicButton = tk.Button(sonosFavouritesFrame, text="6 Music", height=3, bg=my_dark_green, fg=my_white, command=sonos_action_fav_6music)
-sonos1BTNButton = tk.Button(sonosFavouritesFrame, text="1BTN", height=3, bg=my_dark_green, fg=my_white, command=sonos_action_fav_1btn)
-sonosRadio2Button = tk.Button(sonosFavouritesFrame, text="Radio 2", height=3, bg=my_dark_green, fg=my_white, command=sonos_action_fav_radio2)
-sonosLBCButton = tk.Button(sonosFavouritesFrame, text="LBC", height=3, bg=my_dark_green, fg=my_white, command=sonos_action_fav_lbc)
+sonos6MusicButton = tk.Button(sonosFavouritesFrame, text="6 Music",\
+  height=3, command=sonos_action_fav_6music)
+sonos1BTNButton = tk.Button(sonosFavouritesFrame, text="1BTN",\
+  height=3, command=sonos_action_fav_1btn)
+sonosRadio2Button = tk.Button(sonosFavouritesFrame, text="Radio 2",\
+  height=3, command=sonos_action_fav_radio2)
+sonosLBCButton = tk.Button(sonosFavouritesFrame, text="LBC",\
+  height=3, command=sonos_action_fav_lbc)
 sonos6MusicButton.grid(sticky="ew")
 sonos1BTNButton.grid(row=0, column=1, sticky="ew")
 sonosRadio2Button.grid(row=0, column=2, sticky="ew")
