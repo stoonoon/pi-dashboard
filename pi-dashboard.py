@@ -4,6 +4,7 @@
 
 import tkinter as tk
 from gtasks import Gtasks
+from datetime import datetime
 import soco
 import os
 
@@ -11,6 +12,14 @@ my_dark_green = "#162D32"
 my_dark_grey = "#202020"
 my_white = "#BBBBBB"
 separator_v = ",\n"
+backlight_timeout_start_time = -1
+MS_IN_MINUTES = 1000*60
+S_IN_MINUTES = 60
+S_IN_HOURS = S_IN_MINUTES*60
+BACKLIGHT_TIMEOUT_SHORT = 10 * S_IN_MINUTES
+BACKLIGHT_TIMEOUT_LONG = 10*S_IN_HOURS
+BACKLIGHT_DAYTIME_HOUR_START = 8
+BACKLIGHT_DAYTIME_HOUR_END = 22
 
 #tkinter root object and screen config
 root = tk.Tk()
@@ -103,8 +112,7 @@ def update_sonos_favorites():
         sonos_favorites_dict[fav.title]="TBA"
     else:
         sonos_favorites_dict[fav.title]=fav.resources.pop().uri
-  MINUTES = 1000*60
-  root.after(5*MINUTES, update_sonos_favorites)
+  root.after(5*MS_IN_MINUTES, update_sonos_favorites)
 
 def update_sonosPartyModeButton():
   global party_mode
@@ -187,14 +195,44 @@ def sonos_action_fav_radio2():
 def sonos_action_fav_lbc():
   sonos_play_radio_fav("LBC London")
 
-def backlight_toggle():
-  stream = os.popen('cat /sys/class/backlight/rpi_backlight/bl_power')
-  output = stream.read()
-  print(output)
-  if '0' in output: # then backlight is on
-    os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
+def backlight_toggle(action="TOGGLE"):
+  if action=="TOGGLE":
+    stream = os.popen('cat /sys/class/backlight/rpi_backlight/bl_power')
+    output = stream.read()
+  elif action=="ON":
+    output = "1" # pretend backlight was off
+  elif action=="OFF":
+    output = "0" # pretend backlight was on
   else:
+    output = -1 # invalid action -> ignore
+  if '0' in output: # then turn backlight off
+    os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
+  elif '1' in output: # then turn backlight on
     os.popen('sudo bash -c "echo 0 > /sys/class/backlight/rpi_backlight/bl_power"')
+    reset_backlight_timer()
+  else:
+    print(f"Invalid parameter sent to backlight_toggle(action): {action}")
+
+def reset_backlight_timer():
+  global backlight_timeout_start_time
+  backlight_timeout_start_time = datetime.now()
+  
+def check_backlight_timer():
+  global backlight_timeout_start_time
+  current_datetime = datetime.now()
+  if BACKLIGHT_DAYTIME_HOUR_START <= current_datetime.hour <= BACKLIGHT_DAYTIME_HOUR_END: # daytime - use longer timeout
+    backlight_timeout=BACKLIGHT_TIMEOUT_LONG
+  else: #nighttime - use shorter timeout
+    backlight_timeout=BACKLIGHT_TIMEOUT_SHORT
+  if backlight_timeout_start_time==-1: # Then we need to initialise it
+    reset_backlight_timer()
+    backlight_toggle("ON")
+  else: # we can check against it
+    elapsed_time = datetime.now()-backlight_timeout_start_time
+    if elapsed_time.seconds >= (backlight_timeout):
+      backlight_toggle("OFF")
+  root.after(1*MS_IN_MINUTES, check_backlight_timer)
+
 
 # Main window layout frames
 
@@ -307,4 +345,5 @@ sonosFavouritesFrame.columnconfigure(3, weight=1)
 update_tasks()
 update_sonos()
 update_sonos_favorites()
+check_backlight_timer()
 root.mainloop()
