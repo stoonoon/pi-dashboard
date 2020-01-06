@@ -268,6 +268,12 @@ def mouse_watcher():
   mouse_last_known_location = xy
   root.after(1, mouse_watcher)
 
+def update_clock():
+  dt=datetime.now()
+  dt_string= dt.strftime("%d/%m/%Y %H:%M")
+  clockLabel.configure(text=dt_string)
+  root.after(1, update_clock)
+
 # Main window layout frames
 
 # Top menu bar
@@ -283,6 +289,9 @@ sonosFrame = tk.Frame(root)#, bg=my_dark_green)
 sonosFrame.place(relwidth=0.5, relheight=0.95, relx=0.5, rely=0.05)
 
 # menuFrame widgets
+
+clockLabel = tk.Label(menuFrame, text="XX:XX", bg=my_dark_grey)
+clockLabel.pack(side=tk.LEFT)
 quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
   highlightbackground=my_dark_grey, relief=tk.FLAT,\
   activebackground=my_white, activeforeground=my_dark_grey)
@@ -376,6 +385,7 @@ sonosFavouritesFrame.columnconfigure(2, weight=1)
 sonosFavouritesFrame.columnconfigure(3, weight=1)
 
 # Trigger recurring autoupdate methods
+update_clock()
 update_tasks()
 update_sonos()
 update_sonos_favorites()
