@@ -38,10 +38,15 @@ root.geometry("800x480+0+0")
 # make all widgets dark green
 root.option_add("*Background", my_dark_green)
 root.option_add("*Foreground", my_white)
-root.option_add("*activeForeground", my_yellow)
-root.option_add("*activeBackground", my_darker_green)
 root.option_add("*highlightForeground", my_darker_green)
 root.option_add("*highlightBackground", my_darker_green)
+
+# tweak button highlight when mouseover
+root.option_add("*activeForeground", my_yellow)
+root.option_add("*activeBackground", my_darker_green)
+
+# Hide mouse pointer
+root.option_add("*cursor", "none")
 
 # GTasks object
 gt=Gtasks()
@@ -51,8 +56,6 @@ bedroom = soco.SoCo('192.168.1.208')
 kitchen = soco.SoCo('192.168.1.210')
 current_spkr = bedroom # Current speaker to display info for and control
 party_mode = True
-volume_ramp_target = -1
-volume_is_ramping = False
 transport_state = ""
 sonos_favorites_dict = {}
 
@@ -138,10 +141,12 @@ def select_spkr(spkr):
     #other_spkr = bedroom
     sonosBedroomButton.config(relief=tk.RAISED)
     sonosKitchenButton.config(relief=tk.SUNKEN)
-  
+
+# Change focus to bedroom zone  
 def select_bedroom():
   select_spkr(bedroom)
 
+# Change focus to kitchen zone  
 def select_kitchen():
   select_spkr(kitchen)
 
