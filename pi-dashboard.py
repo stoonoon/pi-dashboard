@@ -9,8 +9,10 @@ import soco
 import os
 
 my_dark_green = "#162D32"
+my_darker_green = "#122928"
 my_dark_grey = "#202020"
-my_white = "#BBBBBB"
+my_white = "#AAAAAA"
+my_yellow = "#AAAA00"
 separator_v = ",\n"
 backlight_timeout_start_time = -1
 MS_IN_MINUTES = 1000*60
@@ -36,6 +38,10 @@ root.geometry("800x480+0+0")
 # make all widgets dark green
 root.option_add("*Background", my_dark_green)
 root.option_add("*Foreground", my_white)
+root.option_add("*activeForeground", my_yellow)
+root.option_add("*activeBackground", my_darker_green)
+root.option_add("*highlightForeground", my_darker_green)
+root.option_add("*highlightBackground", my_darker_green)
 
 # GTasks object
 gt=Gtasks()
