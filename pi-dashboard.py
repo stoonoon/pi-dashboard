@@ -5,6 +5,7 @@
 import tkinter as tk
 from gtasks import Gtasks
 from datetime import datetime
+from datetime import timedelta
 import soco
 import os
 
@@ -45,8 +46,7 @@ root.option_add("*highlightBackground", my_darker_green)
 root.option_add("*activeForeground", my_yellow)
 root.option_add("*activeBackground", my_darker_green)
 
-# Hide mouse pointer
-root.option_add("*cursor", "none")
+
 
 # GTasks object
 gt=Gtasks()
@@ -244,6 +244,29 @@ def check_backlight_timer():
       backlight_toggle("OFF")
   root.after(1*MS_IN_MINUTES, check_backlight_timer)
 
+cursor_is_visible = True
+mouse_last_moved = datetime.now()
+mouse_idle_timeout = 5 # seconds
+mouse_last_known_location = root.winfo_pointerxy()
+
+def mouse_watcher():
+  global root, cursor_is_visible, mouse_last_moved, mouse_last_known_location
+  xy = root.winfo_pointerxy()
+  if xy==mouse_last_known_location: # cursor hasn't moved since last loop
+    if cursor_is_visible:
+      dt = datetime.now()
+      if dt > (mouse_last_moved + timedelta(seconds=mouse_idle_timeout)):
+        # Hide mouse pointer
+        root.config(cursor= "none")
+        cursor_is_visible = False
+  else: #cursor has moved since last loop
+    mouse_last_moved = datetime.now()
+    if not cursor_is_visible:
+      # turn cursor back on
+      root.config(cursor= "arrow")
+      cursor_is_visible = True
+  mouse_last_known_location = xy
+  root.after(1, mouse_watcher)
 
 # Main window layout frames
 
@@ -357,4 +380,5 @@ update_tasks()
 update_sonos()
 update_sonos_favorites()
 check_backlight_timer()
+mouse_watcher()
 root.mainloop()
