@@ -296,16 +296,21 @@ def mouse_watcher():
     if cursor_is_visible:
       dt = datetime.now()
       if dt > (mouse_last_moved + timedelta(seconds=mouse_idle_timeout)):
+        # Move pointer away from any highlightable widgets
+        pointer_home=(799,239)
+        root.event_generate('<Motion>', warp=True, x=pointer_home[0], y=pointer_home[1])
+                
         # Hide mouse pointer
         root.config(cursor= "none")
         cursor_is_visible = False
   else: #cursor has moved since last loop
     mouse_last_moved = datetime.now()
+    mouse_last_known_location = xy
     if not cursor_is_visible:
       # turn cursor back on
-      root.config(cursor= "arrow")
+      root.config(cursor= "left_ptr")
       cursor_is_visible = True
-  mouse_last_known_location = xy
+    
   root.after(1, mouse_watcher)
 
 def update_clock():
