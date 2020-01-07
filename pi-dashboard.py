@@ -23,6 +23,7 @@ BACKLIGHT_TIMEOUT_SHORT = 10 * S_IN_MINUTES
 BACKLIGHT_TIMEOUT_LONG = 10*S_IN_HOURS
 BACKLIGHT_DAYTIME_HOUR_START = 8
 BACKLIGHT_DAYTIME_HOUR_END = 22
+backlight_is_on = False
 
 #tkinter root object and screen config
 root = tk.Tk()
@@ -206,22 +207,36 @@ def sonos_action_fav_radio2():
 def sonos_action_fav_lbc():
   sonos_play_radio_fav("LBC London")
 
+def backlight_on():
+  global backlight_is_on
+  os.popen('sudo bash -c "echo 0 > /sys/class/backlight/rpi_backlight/bl_power"')
+  reset_backlight_timer()
+  backlight_is_on = True
+
+def backlight_off():
+  global backlight_is_on
+  os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
+  backlight_is_on = False
+
 def backlight_toggle(action="TOGGLE"):
+  global backlight_is_on
+
   if action=="TOGGLE":
     stream = os.popen('cat /sys/class/backlight/rpi_backlight/bl_power')
     output = stream.read()
-  elif action=="ON":
-    output = "1" # pretend backlight was off
+    if '0' in output:
+      # then backlight was on
+      action = "OFF"
+    else:
+      # then backlight was off, or bl_power not readable
+      action = "ON"
+  
+  if action=="ON":
+    backlight_on()
   elif action=="OFF":
-    output = "0" # pretend backlight was on
+    backlight_off()
   else:
     output = -1 # invalid action -> ignore
-  if '0' in output: # then turn backlight off
-    os.popen('sudo bash -c "echo 1 > /sys/class/backlight/rpi_backlight/bl_power"')
-  elif '1' in output: # then turn backlight on
-    os.popen('sudo bash -c "echo 0 > /sys/class/backlight/rpi_backlight/bl_power"')
-    reset_backlight_timer()
-  else:
     print(f"Invalid parameter sent to backlight_toggle(action): {action}")
 
 def reset_backlight_timer():
@@ -231,17 +246,42 @@ def reset_backlight_timer():
 def check_backlight_timer():
   global backlight_timeout_start_time
   current_datetime = datetime.now()
-  if BACKLIGHT_DAYTIME_HOUR_START <= current_datetime.hour <= BACKLIGHT_DAYTIME_HOUR_END: # daytime - use longer timeout
+
+  # Check if we are in daytime hours
+  if BACKLIGHT_DAYTIME_HOUR_START <= current_datetime.hour <= BACKLIGHT_DAYTIME_HOUR_END:
+    
+    # daytime - use longer timeout
     backlight_timeout=BACKLIGHT_TIMEOUT_LONG
-  else: #nighttime - use shorter timeout
+
+    # check if we need to wake the screen
+    if BACKLIGHT_DAYTIME_HOUR_START == current_datetime.hour:
+      # then we are in the first hour of daytime zone
+      if current_datetime > (backlight_timeout_start_time + timedelta(hours=1)):
+        # then backlight timer has been running for longer than an hour
+        backlight_toggle("ON")
+
+  else:
+    
+    #nighttime - use shorter timeout
     backlight_timeout=BACKLIGHT_TIMEOUT_SHORT
-  if backlight_timeout_start_time==-1: # Then we need to initialise it
+
+  # Check whether we have initialised the timer  
+  if backlight_timeout_start_time==-1:
+    
+    # Then we need to initialise it
     reset_backlight_timer()
     backlight_toggle("ON")
-  else: # we can check against it
+
+  else:
+    
+    # we can check against it
     elapsed_time = datetime.now()-backlight_timeout_start_time
+    
+    # Test if timeout period has been exceeded
     if elapsed_time.seconds >= (backlight_timeout):
       backlight_toggle("OFF")
+  
+  # Schedule the function to run again
   root.after(1*MS_IN_MINUTES, check_backlight_timer)
 
 cursor_is_visible = True
