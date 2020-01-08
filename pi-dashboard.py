@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# note run ' export DISPLAY=:0.0 ' first in terminal if running from remote SSH session
 # pylint: disable=no-member
 
 import tkinter as tk
@@ -24,6 +23,10 @@ BACKLIGHT_TIMEOUT_LONG = 10*S_IN_HOURS
 BACKLIGHT_DAYTIME_HOUR_START = 8
 BACKLIGHT_DAYTIME_HOUR_END = 22
 backlight_is_on = False
+
+# Removes requirement to run ' export DISPLAY=:0.0 ' first in
+# terminal if running from remote SSH session
+os.environ['DISPLAY'] = ':0.0' 
 
 #tkinter root object and screen config
 root = tk.Tk()
