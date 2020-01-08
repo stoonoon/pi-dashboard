@@ -63,6 +63,12 @@ party_mode = True
 transport_state = ""
 sonos_favorites_dict = {}
 
+# mouse_watcher globals (for hiding cursor)
+cursor_is_visible = True
+mouse_last_moved = datetime.now()
+mouse_idle_timeout = 1 # seconds
+mouse_last_known_location = root.winfo_pointerxy()
+
 # Timed autoupdater for gtasks
 def update_tasks():
   task_list=gt.get_tasks()
@@ -87,7 +93,10 @@ def update_sonos():
     update_sonosPartyModeButton()
     
     # Update Volume Scale
-    sonosVolumeSlider.set(current_spkr.volume)
+    if not cursor_is_visible:
+      # Then volume change has definitely come from an external source
+      # so we update the slider position to reflect current setting
+      sonosVolumeSlider.set(current_spkr.volume)
     
     # Update Now Playing info
     sonos_label_text = f"Playing on: {zone_list}\n"
@@ -165,11 +174,11 @@ def toggle_party_mode():
       kitchen.join(bedroom)
 
 def update_sonosVolume(sliderPosition): 
-  # called when slider is moved (either by user, or by update_sonos)
-  # I did briefly look at using current_spkr.ramp_to_volume(sliderPosition),
-  # but slider calls this function repeatedly and overrides target... 
-  # Will maybe revisit this later, but it works well enough for now
-  current_spkr.volume = sliderPosition
+  if cursor_is_visible:
+    # Then slider movements are probably local user-driven 
+    # If we were to override volume every time slider move is
+    # detected then alarms (or any volume ramp) won't work... 
+    current_spkr.volume = sliderPosition
 
 def sonos_action_rwd():
   try:
@@ -286,11 +295,6 @@ def check_backlight_timer():
   
   # Schedule the function to run again
   root.after(1*MS_IN_MINUTES, check_backlight_timer)
-
-cursor_is_visible = True
-mouse_last_moved = datetime.now()
-mouse_idle_timeout = 5 # seconds
-mouse_last_known_location = root.winfo_pointerxy()
 
 def mouse_watcher():
   global root, cursor_is_visible, mouse_last_moved, mouse_last_known_location
