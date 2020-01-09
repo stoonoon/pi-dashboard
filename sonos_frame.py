@@ -101,7 +101,6 @@ class SonosFrame(tk.Frame):
         self.update_sonos_favorites()
 
     def cursor_is_visible(self):
-        #cursor = self.cget('cursor')
         cursor = self.parent.cget('cursor')
         if cursor == 'none':
             return False
