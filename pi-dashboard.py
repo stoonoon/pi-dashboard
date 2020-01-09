@@ -2,18 +2,17 @@
 # pylint: disable=no-member
 
 import tkinter as tk
-from gtasks import Gtasks
-from urllib.error import HTTPError
+from gtasks_frame import GTasksFrame
+from sonos_frame import SonosFrame
 from datetime import datetime
 from datetime import timedelta
-import soco
 import os
 
-my_dark_green = "#162D32"
-my_darker_green = "#122928"
-my_dark_grey = "#202020"
-my_white = "#AAAAAA"
-my_yellow = "#AAAA00"
+my_background_colour = "#162D32" # dark green
+my_highlight_background_colour = "#122928" # darker green
+my_title_background_colour = "#202020" # dark grey
+my_foreground_colour = "#AAAAAA" # light grey
+my_active_foreground_colour = "#AAAA00" # yellow
 separator_v = ",\n"
 backlight_timeout_start_time = -1
 MS_IN_MINUTES = 1000*60
@@ -42,214 +41,20 @@ root.geometry("800x480+0+0")
 # visual styling 
 
 # make all widgets dark green
-root.option_add("*Background", my_dark_green)
-root.option_add("*Foreground", my_white)
-root.option_add("*highlightForeground", my_darker_green)
-root.option_add("*highlightBackground", my_darker_green)
+root.option_add("*Background", my_background_colour)
+root.option_add("*Foreground", my_foreground_colour)
+root.option_add("*highlightForeground", my_highlight_background_colour)
+root.option_add("*highlightBackground", my_highlight_background_colour)
 
 # tweak button highlight when mouseover
-root.option_add("*activeForeground", my_yellow)
-root.option_add("*activeBackground", my_darker_green)
-
-
-
-# GTasks object
-gt=Gtasks()
-
-# Sonos globals
-bedroom = soco.SoCo('192.168.1.208')
-kitchen = soco.SoCo('192.168.1.210')
-current_spkr = bedroom # Current speaker to display info for and control
-party_mode = True
-transport_state = ""
-sonos_favorites_dict = {}
+root.option_add("*activeForeground", my_active_foreground_colour)
+root.option_add("*activeBackground", my_highlight_background_colour)
 
 # mouse_watcher globals (for hiding cursor)
 cursor_is_visible = True
 mouse_last_moved = datetime.now()
 mouse_idle_timeout = 1 # seconds
 mouse_last_known_location = root.winfo_pointerxy()
-
-# Timed autoupdater for gtasks
-def update_tasks():
-  task_list=-1
-  try:
-    task_list=gt.get_tasks()
-  except HTTPError as err:
-    if err.code ==503:
-      print("Google Tasks service unavailable. Refresh skipped.")
-    else:
-      print(f"HTTP error in update_tasks() : {err.code}")
-      raise
-
-  if task_list != -1:
-    tasks_dict = {}
-
-    for task in task_list:
-        if task.parent == None:
-            # then this is a root task
-            tasks_dict[task.title] = []
-
-    for task in task_list:
-        if task.parent != None:
-            prnt = task.parent
-            tasks_dict[prnt.title].append(task.title)
-
-    tasks_str=""
-    for task in tasks_dict:
-        tasks_str += (task + "\n")
-        for subtask in tasks_dict[task]:
-            tasks_str += ("- " + subtask + "\n")
-
-    tasks_str += ("Last updated: " + datetime.now().strftime("%a, %d %b at %H:%M"))
-
-    tasksButton.configure(text=tasks_str)
-    
-
-
-  root.after(10*MS_IN_MINUTES, update_tasks)
-
-# Timed autoupdater for sonos
-def update_sonos():
-    # Check if speakers are grouped and get list of speakers in group
-    unique_zones=set()
-    for player in current_spkr.group.members:
-        unique_zones.add(player.player_name)
-    separator_h = ", "
-    zone_list = separator_h.join(unique_zones)
-    global party_mode
-    if (len(unique_zones) > 1) :
-      party_mode = True
-    else:
-      party_mode = False
-    update_sonosPartyModeButton()
-    
-    # Update Volume Scale
-    if not cursor_is_visible:
-      # Then volume change has definitely come from an external source
-      # so we update the slider position to reflect current setting
-      sonosVolumeSlider.set(current_spkr.volume)
-    
-    # Update Now Playing info
-    sonos_label_text = f"Playing on: {zone_list}\n"
-    current_coordinator = current_spkr.group.coordinator
-    global transport_state
-    transport_state = current_coordinator.get_current_transport_info()\
-      ["current_transport_state"]
-    if transport_state == "PLAYING":
-        sonosPlayPausebutton.configure(text="PAUSE")
-        if current_coordinator.is_playing_radio:
-          sonos_label_text+=("Playing Radio\n")
-          sonosRWDbutton.configure(state=tk.DISABLED)
-          sonosFWDbutton.configure(state=tk.DISABLED)
-        else:
-          sonosRWDbutton.configure(state=tk.NORMAL)
-          sonosFWDbutton.configure(state=tk.NORMAL)
-          track_info=current_coordinator.get_current_track_info()
-          sonos_label_text+=(f"Current Track: {track_info['title']}\n")
-          sonos_label_text+=(f"Artist: {track_info['artist']}\n")
-          sonos_label_text+=(f"Album: {track_info['album']}\n")
-    else:
-      sonosPlayPausebutton.configure(text="PLAY")
-      sonos_label_text+=(f"Current status: {transport_state}")
-    
-    sonosLabel.configure(text=sonos_label_text)
-    root.after(1000, update_sonos)
-
-# Timed autoupdater for sonos library favorites
-def update_sonos_favorites():
-  global sonos_favorites_dict
-  sonos_favorites = bedroom.music_library.get_sonos_favorites()
-  sonos_favorites_dict={}
-  for fav in sonos_favorites:
-    if "New Releases" in fav.title:
-        sonos_favorites_dict[fav.title]="TBA"
-    else:
-        sonos_favorites_dict[fav.title]=fav.resources.pop().uri
-  root.after(5*MS_IN_MINUTES, update_sonos_favorites)
-
-def update_sonosPartyModeButton():
-  global party_mode
-  if party_mode == True:
-    sonosPartyModeButton.configure(text="UNGROUP", relief=tk.SUNKEN)
-  else:
-    sonosPartyModeButton.configure(text="GROUP", relief=tk.RAISED)
-
-def select_spkr(spkr):
-  global current_spkr
-  current_spkr=spkr
-  if spkr==bedroom:
-    #other_spkr = kitchen
-    sonosBedroomButton.config(relief=tk.SUNKEN)
-    sonosKitchenButton.config(relief=tk.RAISED)
-  else:
-    #other_spkr = bedroom
-    sonosBedroomButton.config(relief=tk.RAISED)
-    sonosKitchenButton.config(relief=tk.SUNKEN)
-
-# Change focus to bedroom zone  
-def select_bedroom():
-  select_spkr(bedroom)
-
-# Change focus to kitchen zone  
-def select_kitchen():
-  select_spkr(kitchen)
-
-def toggle_party_mode():
-  global party_mode
-  if party_mode == True:
-    current_spkr.unjoin()
-  else:
-    if current_spkr == bedroom:
-      bedroom.join(kitchen)
-    else:
-      kitchen.join(bedroom)
-
-def update_sonosVolume(sliderPosition): 
-  if cursor_is_visible:
-    # Then slider movements are probably local user-driven 
-    # If we were to override volume every time slider move is
-    # detected then alarms (or any volume ramp) won't work... 
-    current_spkr.volume = sliderPosition
-
-def sonos_action_rwd():
-  try:
-    current_spkr.group.coordinator.previous()
-  except Exception as e:
-    print("Uh-oh. Something went bad while trying to skip to previous track")
-    print (e)
-
-def sonos_action_play_pause():
-  #do the thing
-  if transport_state=="PLAYING":
-    current_spkr.group.coordinator.pause()
-  else:
-    current_spkr.group.coordinator.play()
-  
-  
-
-def sonos_action_fwd():
-  try:
-    current_spkr.group.coordinator.next()
-  except Exception as e:
-    print("Uh-oh. Something went bad while trying to skip to next track")
-    print (e)
-
-def sonos_play_radio_fav(channel_label):
-  current_spkr.group.coordinator.play_uri(\
-    uri=sonos_favorites_dict[channel_label], title=channel_label)
-
-def sonos_action_fav_6music():
-  sonos_play_radio_fav("BBC Radio 6 Music")
-
-def sonos_action_fav_1btn():
-  sonos_play_radio_fav("1BrightonFM")
-  
-def sonos_action_fav_radio2():
-  sonos_play_radio_fav("BBC Radio 2")
-
-def sonos_action_fav_lbc():
-  sonos_play_radio_fav("LBC London")
 
 def backlight_on():
   global backlight_is_on
@@ -361,119 +166,38 @@ def update_clock():
 # Main window layout frames
 
 # Top menu bar
-menuFrame = tk.Frame(root, bg=my_dark_grey)
+menuFrame = tk.Frame(root, bg=my_title_background_colour)
 menuFrame.place(relwidth=1, relheight=0.05, relx=0, rely=0)
 
 #LH gtasks frame
-tasksFrame = tk.Frame(root)#, bg=my_dark_green)
-tasksFrame.place(relwidth=0.5, relheight=0.95, relx=0, rely=0.05)
+tasksFrame = GTasksFrame(root)
+tasksFrame.place(relwidth=0.5, relheight=0.85, relx=0, rely=0.05)
+
+#LH backlight frame
+backlightFrame = tk.Frame(root)
+backlightFrame.place(relwidth=0.5, relheight=0.1, relx=0, rely=0.9)
 
 #RH sonos frame
-sonosFrame = tk.Frame(root)#, bg=my_dark_green)
+sonosFrame = SonosFrame(root)
 sonosFrame.place(relwidth=0.5, relheight=0.95, relx=0.5, rely=0.05)
 
 # menuFrame widgets
-
-clockLabel = tk.Label(menuFrame, text="XX:XX", bg=my_dark_grey)
+clockLabel = tk.Label(menuFrame, text="XX:XX", bg=my_title_background_colour)
 clockLabel.pack(side=tk.LEFT)
-quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
-  highlightbackground=my_dark_grey, relief=tk.FLAT,\
-  activebackground=my_white, activeforeground=my_dark_grey)
+quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_title_background_colour,\
+  highlightbackground=my_title_background_colour, relief=tk.FLAT,\
+  activebackground=my_foreground_colour, activeforeground=my_title_background_colour)
 quitButton.pack(side=tk.RIGHT)
 
-# tasksFrame widgets
-tasksButton = tk.Button(tasksFrame, text="test", justify=tk.LEFT, command=update_tasks)
-tasksButton.grid(sticky="new")
-backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF",\
+# backlightFrame widgets
+backlightToggleButton = tk.Button(backlightFrame, text="BACKLIGHT ON/OFF",\
   height=3, command=backlight_toggle)
 backlightToggleButton.grid(sticky="nsew")
-tasksFrame.columnconfigure(0, weight=1)
-tasksFrame.rowconfigure(0, weight=1)
-
-# sonosFrame layout
-sonosRoomsFrame = tk.Frame(sonosFrame)
-sonosRoomsFrame.grid(sticky="ew")
-sonosVolumeFrame = tk.Frame(sonosFrame)
-sonosVolumeFrame.grid(sticky="ew")
-sonosPlayingFrame = tk.Frame(sonosFrame)
-sonosPlayingFrame.grid(sticky="ew")
-sonosTransportFrame = tk.Frame(sonosFrame)
-sonosTransportFrame.grid(sticky="ew")
-sonosFavouritesFrame = tk.Frame(sonosFrame)
-sonosFavouritesFrame.grid(sticky="ew")
-sonosFrame.columnconfigure(0, weight=1)
-sonosFrame.rowconfigure(2, weight=1)
-
-# sonosRoomsFrame layout
-sonosRoomsLabel = tk.Label(sonosRoomsFrame, text="Room")
-sonosRoomsLabel.grid(columnspan=2, sticky="nsew")
-sonosPartyLabel = tk.Label(sonosRoomsFrame, text="Party Mode")
-sonosPartyLabel.grid(row=0, column=2, sticky="nsew")
-sonosBedroomButton = tk.Button(sonosRoomsFrame, text="Bedroom",\
-  height=3, relief=tk.SUNKEN, command=select_bedroom)
-sonosBedroomButton.grid(row=1, column=0)
-sonosKitchenButton = tk.Button(sonosRoomsFrame, text="Kitchen",\
-  height=3, command=select_kitchen)
-sonosKitchenButton.grid(row=1, column=1)
-sonosPartyModeButton = tk.Button(sonosRoomsFrame, text="ENABLE",\
-  height=3, command=toggle_party_mode)
-sonosPartyModeButton.grid(row=1, column=2)
-sonosRoomsFrame.columnconfigure(0, weight=1)
-sonosRoomsFrame.columnconfigure(1, weight=1)
-sonosRoomsFrame.columnconfigure(2, weight=1)
-
-# sonosVolumeFrame layout
-sonosVolumeSlider = tk.Scale(sonosVolumeFrame, from_=0, to=100,\
-  orient=tk.HORIZONTAL, length=350, highlightbackground=my_dark_green,\
-  sliderlength=15, width=30, command=update_sonosVolume)
-sonosVolumeSlider.grid()
-sonosVolumeFrame.columnconfigure(0, weight=1)
-
-# sonosPlayingFrame layout
-sonosLabel = tk.Label(sonosPlayingFrame, text="waiting for info")
-sonosLabel.grid()
-sonosPlayingFrame.columnconfigure(0, weight=1)
-sonosPlayingFrame.rowconfigure(0, weight=1)
-
-
-# sonosTransportFrame layout
-sonosRWDbutton = tk.Button(sonosTransportFrame, text="RWD",\
-  height=3, width=10, command=sonos_action_rwd)
-sonosRWDbutton.grid()
-sonosPlayPausebutton = tk.Button(sonosTransportFrame, text="Play",\
-  height=3, width=10, command=sonos_action_play_pause)
-sonosPlayPausebutton.grid(row=0, column=1)
-sonosFWDbutton = tk.Button(sonosTransportFrame, text="FWD",\
-  height=3, width=10, command=sonos_action_fwd)
-sonosFWDbutton.grid(row=0, column=2)
-sonosTransportFrame.columnconfigure(0, weight=1)
-sonosTransportFrame.columnconfigure(1, weight=1)
-sonosTransportFrame.columnconfigure(2, weight=1)
-
-
-# sonosFavoritesFrame layout
-sonos6MusicButton = tk.Button(sonosFavouritesFrame, text="6 Music",\
-  height=3, command=sonos_action_fav_6music)
-sonos1BTNButton = tk.Button(sonosFavouritesFrame, text="1BTN",\
-  height=3, command=sonos_action_fav_1btn)
-sonosRadio2Button = tk.Button(sonosFavouritesFrame, text="Radio 2",\
-  height=3, command=sonos_action_fav_radio2)
-sonosLBCButton = tk.Button(sonosFavouritesFrame, text="LBC",\
-  height=3, command=sonos_action_fav_lbc)
-sonos6MusicButton.grid(sticky="ew")
-sonos1BTNButton.grid(row=0, column=1, sticky="ew")
-sonosRadio2Button.grid(row=0, column=2, sticky="ew")
-sonosLBCButton.grid(row=0, column=3, sticky="ew")
-sonosFavouritesFrame.columnconfigure(0, weight=1)
-sonosFavouritesFrame.columnconfigure(1, weight=1)
-sonosFavouritesFrame.columnconfigure(2, weight=1)
-sonosFavouritesFrame.columnconfigure(3, weight=1)
+backlightFrame.columnconfigure(0, weight=1)
+backlightFrame.rowconfigure(0, weight=1)
 
 # Trigger recurring autoupdate methods
 update_clock()
-update_tasks()
-update_sonos()
-update_sonos_favorites()
 check_backlight_timer()
 mouse_watcher()
 root.mainloop()

@@ -2,3 +2,5 @@ ShutdownPi.sh
 .vscode/.ropeproject/config.py
 .gitignore
 .vscode/.ropeproject/objectdb
+__pycache__/gtasks_frame.cpython-37.pyc
+__pycache__/sonos_frame.cpython-37.pyc
