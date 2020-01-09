@@ -72,9 +72,29 @@ mouse_last_known_location = root.winfo_pointerxy()
 # Timed autoupdater for gtasks
 def update_tasks():
   task_list=gt.get_tasks()
-  task_names = "Tasks:\n\n"
-  task_names += separator_v.join(task.title for task in task_list)
-  tasksLabel.configure(text=task_names)
+
+  tasks_dict = {}
+
+  for task in task_list:
+      if task.parent == None:
+          # then this is a root task
+          tasks_dict[task.title] = []
+
+  for task in task_list:
+      if task.parent != None:
+          prnt = task.parent
+          tasks_dict[prnt.title].append(task.title)
+
+  tasks_str=""
+  for task in tasks_dict:
+      tasks_str += (task + "\n")
+      for subtask in tasks_dict[task]:
+          tasks_str += ("- " + subtask + "\n")
+
+
+  #tasks_str = "Tasks:\n\n"
+  #tasks_str += separator_v.join(task.title for task in task_list)
+  tasksLabel.configure(text=tasks_str)
   root.after(1000, update_tasks)
 
 # Timed autoupdater for sonos
@@ -350,7 +370,7 @@ quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
 quitButton.pack(side=tk.RIGHT)
 
 # tasksFrame widgets
-tasksLabel = tk.Label(tasksFrame, text="loading")
+tasksLabel = tk.Label(tasksFrame, text="loading", justify=tk.LEFT)
 tasksLabel.grid(sticky="new")
 backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF", height=3, command=backlight_toggle)
 backlightToggleButton.grid(sticky="nsew")
