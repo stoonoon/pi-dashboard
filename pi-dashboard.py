@@ -79,6 +79,7 @@ def update_tasks():
     if err.code ==503:
       print("Google Tasks service unavailable. Refresh skipped.")
     else:
+      print(f"HTTP error in update_tasks() : {err.code}")
       raise
 
   if task_list != -1:
@@ -381,13 +382,10 @@ quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
 quitButton.pack(side=tk.RIGHT)
 
 # tasksFrame widgets
-#tasksLabel = tk.Label(tasksFrame, text="loading", justify=tk.LEFT)
-#tasksLabel.grid(sticky="new")
-tasksButton = tk.Button(tasksFrame, text="test", command=update_tasks)
+tasksButton = tk.Button(tasksFrame, text="test", justify=tk.LEFT, command=update_tasks)
 tasksButton.grid(sticky="new")
-#tasksLabel = tk.Label(tasksButton, text="loading", justify=tk.LEFT)
-#tasksLabel.grid(sticky="new")
-backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF", height=3, command=backlight_toggle)
+backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF",\
+  height=3, command=backlight_toggle)
 backlightToggleButton.grid(sticky="nsew")
 tasksFrame.columnconfigure(0, weight=1)
 tasksFrame.rowconfigure(0, weight=1)
