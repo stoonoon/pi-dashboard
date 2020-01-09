@@ -3,6 +3,7 @@
 
 import tkinter as tk
 from gtasks import Gtasks
+from urllib.error import HTTPError
 from datetime import datetime
 from datetime import timedelta
 import soco
@@ -71,31 +72,41 @@ mouse_last_known_location = root.winfo_pointerxy()
 
 # Timed autoupdater for gtasks
 def update_tasks():
-  task_list=gt.get_tasks()
+  task_list=-1
+  try:
+    task_list=gt.get_tasks()
+  except HTTPError as err:
+    if err.code ==503:
+      print("Google Tasks service unavailable. Refresh skipped.")
+    else:
+      raise
 
-  tasks_dict = {}
+  if task_list != -1:
+    tasks_dict = {}
 
-  for task in task_list:
-      if task.parent == None:
-          # then this is a root task
-          tasks_dict[task.title] = []
+    for task in task_list:
+        if task.parent == None:
+            # then this is a root task
+            tasks_dict[task.title] = []
 
-  for task in task_list:
-      if task.parent != None:
-          prnt = task.parent
-          tasks_dict[prnt.title].append(task.title)
+    for task in task_list:
+        if task.parent != None:
+            prnt = task.parent
+            tasks_dict[prnt.title].append(task.title)
 
-  tasks_str=""
-  for task in tasks_dict:
-      tasks_str += (task + "\n")
-      for subtask in tasks_dict[task]:
-          tasks_str += ("- " + subtask + "\n")
+    tasks_str=""
+    for task in tasks_dict:
+        tasks_str += (task + "\n")
+        for subtask in tasks_dict[task]:
+            tasks_str += ("- " + subtask + "\n")
+
+    tasks_str += ("Last updated: " + datetime.now().strftime("%a, %d %b at %H:%M"))
+
+    tasksButton.configure(text=tasks_str)
+    
 
 
-  #tasks_str = "Tasks:\n\n"
-  #tasks_str += separator_v.join(task.title for task in task_list)
-  tasksLabel.configure(text=tasks_str)
-  root.after(1000, update_tasks)
+  root.after(10*MS_IN_MINUTES, update_tasks)
 
 # Timed autoupdater for sonos
 def update_sonos():
@@ -370,8 +381,12 @@ quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_dark_grey,\
 quitButton.pack(side=tk.RIGHT)
 
 # tasksFrame widgets
-tasksLabel = tk.Label(tasksFrame, text="loading", justify=tk.LEFT)
-tasksLabel.grid(sticky="new")
+#tasksLabel = tk.Label(tasksFrame, text="loading", justify=tk.LEFT)
+#tasksLabel.grid(sticky="new")
+tasksButton = tk.Button(tasksFrame, text="test", command=update_tasks)
+tasksButton.grid(sticky="new")
+#tasksLabel = tk.Label(tasksButton, text="loading", justify=tk.LEFT)
+#tasksLabel.grid(sticky="new")
 backlightToggleButton = tk.Button(tasksFrame, text="BACKLIGHT ON/OFF", height=3, command=backlight_toggle)
 backlightToggleButton.grid(sticky="nsew")
 tasksFrame.columnconfigure(0, weight=1)
