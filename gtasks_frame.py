@@ -4,17 +4,15 @@ import tkinter as tk
 from gtasks import Gtasks
 from urllib.error import HTTPError
 from datetime import datetime
+import pi_dashboard_config as cfg
 
 class GTasksFrame(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.auto_refresh_time_ms = 10*60*1000 # 10 minutes in ms
+        self.auto_refresh_time_ms = cfg.gtasks_auto_refresh_time
         self.tasksButton = tk.Button(self, text="test", justify=tk.LEFT, command=self.update_tasks)
         self.tasksButton.grid(sticky="new")
-        #self.backlightToggleButton = tk.Button(self, text="BACKLIGHT ON/OFF",\
-            #height=3)#, command=backlight_toggle)
-        #self.backlightToggleButton.grid(sticky="nsew")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.update_tasks()

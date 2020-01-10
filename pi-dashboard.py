@@ -2,26 +2,15 @@
 # pylint: disable=no-member
 
 import tkinter as tk
+import pi_dashboard_config as cfg
 from gtasks_frame import GTasksFrame
 from sonos_frame import SonosFrame
 from datetime import datetime
 from datetime import timedelta
 import os
 
-my_background_colour = "#162D32" # dark green
-my_highlight_background_colour = "#122928" # darker green
-my_title_background_colour = "#202020" # dark grey
-my_foreground_colour = "#AAAAAA" # light grey
-my_active_foreground_colour = "#AAAA00" # yellow
-separator_v = ",\n"
+
 backlight_timeout_start_time = -1
-MS_IN_MINUTES = 1000*60
-S_IN_MINUTES = 60
-S_IN_HOURS = S_IN_MINUTES*60
-BACKLIGHT_TIMEOUT_SHORT = 10 * S_IN_MINUTES
-BACKLIGHT_TIMEOUT_LONG = 10*S_IN_HOURS
-BACKLIGHT_DAYTIME_HOUR_START = 8
-BACKLIGHT_DAYTIME_HOUR_END = 22
 backlight_is_on = False
 
 # Removes requirement to run ' export DISPLAY=:0.0 ' first in
@@ -41,14 +30,14 @@ root.geometry("800x480+0+0")
 # visual styling 
 
 # make all widgets dark green
-root.option_add("*Background", my_background_colour)
-root.option_add("*Foreground", my_foreground_colour)
-root.option_add("*highlightForeground", my_highlight_background_colour)
-root.option_add("*highlightBackground", my_highlight_background_colour)
+root.option_add("*Background", cfg.background_colour)
+root.option_add("*Foreground", cfg.foreground_colour)
+root.option_add("*highlightForeground", cfg.highlight_background_colour)
+root.option_add("*highlightBackground", cfg.highlight_background_colour)
 
 # tweak button highlight when mouseover
-root.option_add("*activeForeground", my_active_foreground_colour)
-root.option_add("*activeBackground", my_highlight_background_colour)
+root.option_add("*activeForeground", cfg.active_foreground_colour)
+root.option_add("*activeBackground", cfg.highlight_background_colour)
 
 # mouse_watcher globals (for hiding cursor)
 cursor_is_visible = True
@@ -97,13 +86,14 @@ def check_backlight_timer():
   current_datetime = datetime.now()
 
   # Check if we are in daytime hours
-  if BACKLIGHT_DAYTIME_HOUR_START <= current_datetime.hour <= BACKLIGHT_DAYTIME_HOUR_END:
+  if cfg.BACKLIGHT_DAYTIME_HOUR_START <= current_datetime.hour <= \
+    cfg.BACKLIGHT_DAYTIME_HOUR_END:
     
     # daytime - use longer timeout
-    backlight_timeout=BACKLIGHT_TIMEOUT_LONG
+    backlight_timeout=cfg.BACKLIGHT_TIMEOUT_LONG
 
     # check if we need to wake the screen
-    if BACKLIGHT_DAYTIME_HOUR_START == current_datetime.hour:
+    if cfg.BACKLIGHT_DAYTIME_HOUR_START == current_datetime.hour:
       # then we are in the first hour of daytime zone
       if current_datetime > (backlight_timeout_start_time + timedelta(hours=1)):
         # then backlight timer has been running for longer than an hour
@@ -112,7 +102,7 @@ def check_backlight_timer():
   else:
     
     #nighttime - use shorter timeout
-    backlight_timeout=BACKLIGHT_TIMEOUT_SHORT
+    backlight_timeout=cfg.BACKLIGHT_TIMEOUT_SHORT
 
   # Check whether we have initialised the timer  
   if backlight_timeout_start_time==-1:
@@ -131,7 +121,7 @@ def check_backlight_timer():
       backlight_toggle("OFF")
   
   # Schedule the function to run again
-  root.after(1*MS_IN_MINUTES, check_backlight_timer)
+  root.after(1*cfg.MS_IN_MINUTES, check_backlight_timer)
 
 def mouse_watcher():
   global root, cursor_is_visible, mouse_last_moved, mouse_last_known_location
@@ -142,7 +132,8 @@ def mouse_watcher():
       if dt > (mouse_last_moved + timedelta(seconds=mouse_idle_timeout)):
         # Move pointer away from any highlightable widgets
         pointer_home=(799,239)
-        root.event_generate('<Motion>', warp=True, x=pointer_home[0], y=pointer_home[1])
+        root.event_generate('<Motion>', warp=True, x=pointer_home[0], \
+          y=pointer_home[1])
                 
         # Hide mouse pointer
         root.config(cursor= "none")
@@ -155,18 +146,18 @@ def mouse_watcher():
       root.config(cursor= "left_ptr")
       cursor_is_visible = True
     
-  root.after(1, mouse_watcher)
+  root.after(1*cfg.MS_IN_MINUTES, mouse_watcher)
 
 def update_clock():
   dt=datetime.now()
   dt_string= dt.strftime("%d/%m/%Y %H:%M")
   clockLabel.configure(text=dt_string)
-  root.after(1, update_clock)
+  root.after(1*cfg.MS_IN_MINUTES, update_clock)
 
 # Main window layout frames
 
 # Top menu bar
-menuFrame = tk.Frame(root, bg=my_title_background_colour)
+menuFrame = tk.Frame(root, bg=cfg.title_background_colour)
 menuFrame.place(relwidth=1, relheight=0.05, relx=0, rely=0)
 
 #LH gtasks frame
@@ -182,11 +173,12 @@ sonosFrame = SonosFrame(root)
 sonosFrame.place(relwidth=0.5, relheight=0.95, relx=0.5, rely=0.05)
 
 # menuFrame widgets
-clockLabel = tk.Label(menuFrame, text="XX:XX", bg=my_title_background_colour)
+clockLabel = tk.Label(menuFrame, text="XX:XX", bg=cfg.title_background_colour)
 clockLabel.pack(side=tk.LEFT)
-quitButton = tk.Button(menuFrame, text="X", command=exit, bg=my_title_background_colour,\
-  highlightbackground=my_title_background_colour, relief=tk.FLAT,\
-  activebackground=my_foreground_colour, activeforeground=my_title_background_colour)
+quitButton = tk.Button(menuFrame, text="X", command=exit, \
+  bg=cfg.title_background_colour, highlightbackground=cfg.title_background_colour,\
+     relief=tk.FLAT, activebackground=cfg.foreground_colour, \
+       activeforeground=cfg.title_background_colour)
 quitButton.pack(side=tk.RIGHT)
 
 # backlightFrame widgets
