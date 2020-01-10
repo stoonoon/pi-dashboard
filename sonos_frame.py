@@ -2,14 +2,15 @@
 import tkinter as tk
 import soco
 import os
+import pi_dashboard_config as cfg
 
 class SonosFrame(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.auto_refresh_time_ms = 1000 # 1 second in ms
-        self.bedroom = soco.SoCo('192.168.1.208')
-        self.kitchen = soco.SoCo('192.168.1.210')
+        self.auto_refresh_time_ms = cfg.sonos_auto_refresh_time
+        self.bedroom = soco.SoCo(cfg.sonos_bedroom_ip)
+        self.kitchen = soco.SoCo(cfg.sonos_kitchen_ip)
         self.current_spkr = self.bedroom # Current speaker to display info for and control
         self.party_mode = True
         self.transport_state = ""

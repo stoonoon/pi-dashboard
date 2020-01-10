@@ -8,12 +8,18 @@ foreground_colour = "#AAAAAA" # light grey
 active_foreground_colour = "#AAAA00" # yellow
 
 # Convenience time conversions
-MS_IN_MINUTES = 1000*60
+MS_IN_SECONDS = 1000
+MS_IN_MINUTES = MS_IN_SECONDS * 60
 S_IN_MINUTES = 60
 S_IN_HOURS = S_IN_MINUTES * 60
 
 # gtasks_frame config
 gtasks_auto_refresh_time = 10 * MS_IN_MINUTES
+
+# sonos_frame config
+sonos_auto_refresh_time = 1 * MS_IN_SECONDS
+sonos_bedroom_ip = '192.168.1.208'
+sonos_kitchen_ip = '192.168.1.210'
 
 # backlight config
 BACKLIGHT_TIMEOUT_SHORT = 10 * S_IN_MINUTES
