@@ -5,3 +5,4 @@ ShutdownPi.sh
 __pycache__/gtasks_frame.cpython-37.pyc
 __pycache__/sonos_frame.cpython-37.pyc
 __pycache__/pi_dashboard_config.cpython-37.pyc
+__pycache__/backlight.cpython-37.pyc

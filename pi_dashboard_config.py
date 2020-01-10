@@ -1,4 +1,11 @@
+import datetime
 # General UI config
+
+width=800
+height=480
+relx=0
+rely=0
+prevent_move_resize=True
 
 # Colour scheme
 background_colour = "#162D32" # dark green
@@ -22,7 +29,13 @@ sonos_bedroom_ip = '192.168.1.208'
 sonos_kitchen_ip = '192.168.1.210'
 
 # backlight config
-BACKLIGHT_TIMEOUT_SHORT = 10 * S_IN_MINUTES
-BACKLIGHT_TIMEOUT_LONG = 10 * S_IN_HOURS
+BACKLIGHT_TIMEOUT_SHORT = datetime.timedelta(minutes=10)
+BACKLIGHT_TIMEOUT_LONG = datetime.timedelta(hours=10)
 BACKLIGHT_DAYTIME_HOUR_START = 8
 BACKLIGHT_DAYTIME_HOUR_END = 22
+backlight_auto_refresh_time = 1 * MS_IN_MINUTES
+
+# mouse config
+mouse_idle_timeout = 1 # (seconds)
+pointer_home=(799,239)
+mouse_watcher_refresh_time = 100 # (ms)
