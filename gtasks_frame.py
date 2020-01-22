@@ -49,9 +49,9 @@ class GTasksFrame(tk.Frame):
 
             tasks_str=""
             for task in tasks_dict:
-                tasks_str += (task + "\n")
+                tasks_str += ("> " + task + "\n")
                 for subtask in tasks_dict[task]:
-                    tasks_str += ("- " + subtask + "\n")
+                    tasks_str += ("  - " + subtask + "\n")
 
             tasks_str += ("Last updated: " + datetime.now().strftime("%a, %d %b at %H:%M"))
             
