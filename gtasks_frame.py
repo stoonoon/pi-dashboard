@@ -31,15 +31,19 @@ class GTasksFrame(tk.Frame):
             raise
 
         if task_list != -1:
+            # then task_list has been populated + is safe to iterate over
             tasks_dict = {}
 
+            # Get all the root tasks first
             for task in task_list:
                 if task.parent == None:
-                    # then this is a root task
+                    # then this is a root task - add to dict
                     tasks_dict[task.title] = []
 
+            # Get all the subtasks 
             for task in task_list:
                 if task.parent != None:
+                    # then this is a subtask - add to its parent
                     prnt = task.parent
                     tasks_dict[prnt.title].append(task.title)
 
@@ -50,7 +54,11 @@ class GTasksFrame(tk.Frame):
                     tasks_str += ("- " + subtask + "\n")
 
             tasks_str += ("Last updated: " + datetime.now().strftime("%a, %d %b at %H:%M"))
+            
+            # Set word wrap length to suit Button width
+            self.tasksButton.configure(wraplength=400)
 
+            # Add string to button
             self.tasksButton.configure(text=tasks_str)
 
         self.after(self.auto_refresh_time_ms, self.update_tasks)
